@@ -1,26 +1,26 @@
 ﻿using UnityEngine;
 using System;
-
 public class LandscapeMaker : MonoBehaviour {
 
-    int heightMapSideLength = 512;
 
-    float scale = 0.5f;         //scale of 
+
+    private int heightMapSideLength = 512;
+
+    private float scale = 0.5f;         //scale of noise
 
 
     // Use this for initialization
     void Start () {
 
-        Terrain landscape = GetComponent<Terrain>();
-        TerrainData landscapeData = landscape.terrainData;
+        TerrainData landscapeData = GetComponent<Terrain>().terrainData;
 
         landscapeData.heightmapResolution = heightMapSideLength + 1;
 
-        generateLandscape(landscape);
-
+        generateLandscape(landscapeData);
+        paintLandscape(landscapeData);
     }
 
-    void generateLandscape(Terrain terrain)
+    void generateLandscape(TerrainData data)
     {
 
         float [,] heightData = new float[heightMapSideLength + 1, heightMapSideLength + 1];
@@ -65,7 +65,38 @@ public class LandscapeMaker : MonoBehaviour {
         }
 
         //set the landscape
-        terrain.terrainData.SetHeights(0, 0, heightData);
+        data.SetHeights(0, 0, heightData);
 
+    }
+
+    void paintLandscape(TerrainData data)
+    {
+
+
+        float[,,] texureMap = new float[data.alphamapWidth, data.alphamapHeight, data.alphamapLayers];
+
+        for (int y = 0; y < data.alphamapHeight; y++)
+        {
+            for (int x = 0; x < data.alphamapWidth; x++)
+            {
+
+                float normY = (float)y / (float)data.alphamapHeight;
+                float normX = (float)x / (float)data.alphamapWidth;
+
+                float height = data.GetHeight(Mathf.RoundToInt(normY * data.heightmapHeight), Mathf.RoundToInt(normX * data.heightmapWidth));
+
+                if (height > 0.9 * data.heightmapHeight)
+                {
+                    texureMap[x, y, 1] = 1f;
+                }
+                else
+                {
+                    texureMap[x, y, 0] = 1f;
+                }
+
+            }
+        }
+
+        data.SetAlphamaps(0, 0, texureMap);
     }
 }
